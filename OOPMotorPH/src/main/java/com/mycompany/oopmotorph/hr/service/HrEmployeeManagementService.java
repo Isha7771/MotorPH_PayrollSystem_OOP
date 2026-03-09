@@ -5,6 +5,7 @@ import com.mycompany.oopmotorph.employee.model.EmployeeRecord;
 import com.mycompany.oopmotorph.employee.repository.EmployeeRepository;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -100,6 +101,9 @@ public class HrEmployeeManagementService {
         String first = reqName(e.getFirstName(), "First Name");
         String email = reqEmail(e.getEmail(), "Email");
         if (e.getBirthday() == null) throw new IllegalArgumentException("Birthday is required.");
+        if (e.getBirthday().isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Birthday cannot be a future date.");
+        }
 
         String statusNorm = normalizeStatus(req(e.getStatus(), "Status"));
         String position = reqText(e.getPosition(), "Position");

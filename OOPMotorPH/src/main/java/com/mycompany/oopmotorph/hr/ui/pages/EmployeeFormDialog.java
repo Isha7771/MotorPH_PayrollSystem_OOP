@@ -2,21 +2,30 @@ package com.mycompany.oopmotorph.hr.ui.pages;
 
 import com.mycompany.oopmotorph.employee.model.EmployeeFactory;
 import com.mycompany.oopmotorph.employee.model.EmployeeRecord;
+import com.toedter.calendar.JDateChooser;
 
 import javax.swing.*;
 import javax.swing.text.MaskFormatter;
 import java.awt.*;
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 public class EmployeeFormDialog extends JDialog {
+
+    @FunctionalInterface
+    public interface SaveHandler {
+        void save(EmployeeRecord employee) throws Exception;
+    }
 
     private final JTextField txtEmpNo = new JTextField(15);
     private final JTextField txtLast = new JTextField(15);
     private final JTextField txtFirst = new JTextField(15);
     private final JTextField txtEmail = new JTextField(20);
-    private final JTextField txtBday = new JTextField(15);
+    private final JDateChooser dateChooser = new JDateChooser();
     private final JTextField txtAddress = new JTextField(20);
     private final JFormattedTextField txtPhone = new JFormattedTextField(createMask("###-###-###"));
     private final JFormattedTextField txtSss = new JFormattedTextField(createMask("##-#######-#"));
@@ -40,16 +49,18 @@ public class EmployeeFormDialog extends JDialog {
 
     private EmployeeRecord result;
     private final boolean editMode;
+    private final SaveHandler saveHandler;
     private final DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("M/d/yyyy");
 
-    public EmployeeFormDialog(Window owner, String title, EmployeeRecord existing) {
-        this(owner, title, existing, null);
+    public EmployeeFormDialog(Window owner, String title, EmployeeRecord existing, SaveHandler saveHandler) {
+        this(owner, title, existing, null, saveHandler);
     }
 
-    public EmployeeFormDialog(Window owner, String title, EmployeeRecord existing, String autoEmployeeNo) {
+    public EmployeeFormDialog(Window owner, String title, EmployeeRecord existing, String autoEmployeeNo, SaveHandler saveHandler) {
         super(owner, title, ModalityType.APPLICATION_MODAL);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         this.editMode = existing != null;
+        this.saveHandler = saveHandler;
         buildUI();
 
         if (existing != null) {
@@ -83,12 +94,14 @@ public class EmployeeFormDialog extends JDialog {
         gc.anchor = GridBagConstraints.WEST;
         gc.fill = GridBagConstraints.HORIZONTAL;
 
+        configureDateChooser();
+
         int r = 0;
-        if (editMode) addRow(form, gc, r++, "Employee #", txtEmpNo);
+        addRow(form, gc, r++, "Employee #", txtEmpNo);
         addRow(form, gc, r++, "Last Name", txtLast);
         addRow(form, gc, r++, "First Name", txtFirst);
         addRow(form, gc, r++, "Email", txtEmail);
-        addRow(form, gc, r++, "Birthday (M/d/yyyy)", txtBday);
+        addRow(form, gc, r++, "Birthday", dateChooser);
         addRow(form, gc, r++, "Address", txtAddress);
         addRow(form, gc, r++, "Phone Number", txtPhone);
 
@@ -120,6 +133,19 @@ public class EmployeeFormDialog extends JDialog {
         getContentPane().add(buttons, BorderLayout.SOUTH);
     }
 
+    private void configureDateChooser() {
+        dateChooser.setDateFormatString("M/d/yyyy");
+        dateChooser.setMaxSelectableDate(new Date());
+        dateChooser.setPreferredSize(new Dimension(160, 26));
+        JComponent dateEditor = dateChooser.getDateEditor().getUiComponent() instanceof JComponent
+                ? (JComponent) dateChooser.getDateEditor().getUiComponent()
+                : null;
+        if (dateEditor instanceof JTextField textField) {
+            textField.setEditable(false);
+            textField.setColumns(12);
+        }
+    }
+
     private void addRow(JPanel panel, GridBagConstraints gc, int row, String label, Component field) {
         gc.gridx = 0;
         gc.gridy = row;
@@ -135,7 +161,7 @@ public class EmployeeFormDialog extends JDialog {
         txtLast.setText(nz(e.getLastName()));
         txtFirst.setText(nz(e.getFirstName()));
         txtEmail.setText(nz(e.getEmail()));
-        txtBday.setText(e.getBirthday() == null ? "" : dateFmt.format(e.getBirthday()));
+        dateChooser.setDate(toDate(e.getBirthday()));
         txtAddress.setText(nz(e.getAddress()));
         txtPhone.setText(nz(e.getPhoneNumber()));
         txtSss.setText(nz(e.getSssNo()));
@@ -161,7 +187,7 @@ public class EmployeeFormDialog extends JDialog {
             e.setLastName(reqNoDigits(txtLast.getText(), "Last Name"));
             e.setFirstName(reqNoDigits(txtFirst.getText(), "First Name"));
             e.setEmail(req(txtEmail.getText(), "Email"));
-            e.setBirthday(parseDate(req(txtBday.getText(), "Birthday")));
+            e.setBirthday(requireBirthday());
             e.setAddress(nz(txtAddress.getText()).trim());
             e.setPhoneNumber(req(txtPhone.getText(), "Phone Number"));
             e.setSssNo(maskedOrEmpty(txtSss));
@@ -177,11 +203,32 @@ public class EmployeeFormDialog extends JDialog {
             e.setClothingAllowance(parseMoney(txtClothing.getText()));
             e.setGrossSemiMonthlyRate(parseMoney(txtGross.getText()));
             e.setHourlyRate(parseMoney(txtHourly.getText()));
+
+            if (saveHandler != null) {
+                saveHandler.save(e);
+            }
+
             result = e;
             dispose();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Validation Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private LocalDate requireBirthday() {
+        Date selectedDate = dateChooser.getDate();
+        if (selectedDate == null) {
+            throw new IllegalArgumentException("Birthday is required.");
+        }
+
+        LocalDate birthday = Instant.ofEpochMilli(selectedDate.getTime())
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
+        if (birthday.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Birthday cannot be a future date.");
+        }
+        return birthday;
     }
 
     private static MaskFormatter createMask(String mask) {
@@ -205,10 +252,6 @@ public class EmployeeFormDialog extends JDialog {
         return t.contains("_") ? "" : t;
     }
 
-    private LocalDate parseDate(String s) {
-        return LocalDate.parse(s.trim(), dateFmt);
-    }
-
     private double parseMoney(String s) {
         if (s == null || s.trim().isEmpty()) return 0;
         return Double.parseDouble(s.trim().replace(",", "").replace("\"", ""));
@@ -229,5 +272,10 @@ public class EmployeeFormDialog extends JDialog {
 
     private String nz(String s) {
         return s == null ? "" : s;
+    }
+
+    private Date toDate(LocalDate localDate) {
+        if (localDate == null) return null;
+        return Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 }

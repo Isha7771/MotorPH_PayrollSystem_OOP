@@ -112,18 +112,19 @@ public class HrEmployeeManagementPage extends JPanel {
             return;
         }
 
-        EmployeeFormDialog dlg = new EmployeeFormDialog(SwingUtilities.getWindowAncestor(this), "Add Employee", null, nextNo);
+        EmployeeFormDialog dlg = new EmployeeFormDialog(
+                SwingUtilities.getWindowAncestor(this),
+                "Add Employee",
+                null,
+                nextNo,
+                employee -> hrService.add(employee)
+        );
         dlg.setVisible(true);
         EmployeeRecord created = dlg.getResult();
         if (created == null) return;
 
-        try {
-            hrService.add(created);
-            loadAll();
-            JOptionPane.showMessageDialog(this, "Employee added!");
-        } catch (Exception ex) {
-            showError("Failed to add employee", ex);
-        }
+        loadAll();
+        JOptionPane.showMessageDialog(this, "Employee added!");
     }
 
     private void onEdit() {
@@ -133,18 +134,18 @@ public class HrEmployeeManagementPage extends JPanel {
             return;
         }
 
-        EmployeeFormDialog dlg = new EmployeeFormDialog(SwingUtilities.getWindowAncestor(this), "Edit Employee", selected);
+        EmployeeFormDialog dlg = new EmployeeFormDialog(
+                SwingUtilities.getWindowAncestor(this),
+                "Edit Employee",
+                selected,
+                employee -> hrService.updateHr(employee)
+        );
         dlg.setVisible(true);
         EmployeeRecord updated = dlg.getResult();
         if (updated == null) return;
 
-        try {
-            hrService.updateHr(updated);
-            loadAll();
-            JOptionPane.showMessageDialog(this, "Employee updated!");
-        } catch (Exception ex) {
-            showError("Failed to update employee", ex);
-        }
+        loadAll();
+        JOptionPane.showMessageDialog(this, "Employee updated!");
     }
 
     private void onDelete() {
