@@ -30,7 +30,6 @@ The system was developed as part of the MO-IT110 Object-Oriented Programming cou
     - IT support module for ticket handling
 
 **Technologies Used**
-
     - Java
     - Java Swing (GUI)
     - Object-Oriented Programming (OOP)
@@ -61,6 +60,7 @@ Model Layer → Data structures and objects
 
 OOPMotorPH
     pom.xml
+    
     src/main/java/com/mycompany/oopmotorph
         app
         AppContext.java
