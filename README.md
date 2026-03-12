@@ -30,7 +30,6 @@ The system was developed as part of the MO-IT110 Object-Oriented Programming cou
     - IT support module for ticket handling
 
 **Technologies Used**
-
     - Java
     - Java Swing (GUI)
     - Object-Oriented Programming (OOP)
@@ -57,9 +56,9 @@ Service Layer → Business Logic Processing
 Repository Layer → Data access and CSV handling
 Model Layer → Data structures and objects
 
-**Project Structure**
+**Project Structure** 
 
-OOPMotorPH
+```OOPMotorPH
 ├── pom.xml
 ├── src/main/java/com/mycompany/oopmotorph
 │   ├── app
@@ -157,7 +156,7 @@ OOPMotorPH
     ├── SSSContribution.csv
     ├── WitholdingTax.csv
     └── users.csv
-    
+  ```  
 **How to Run the System**
 1. Clone the repository
 2. git clone https://github.com/Isha7771/MotorPH_PayrollSystem_OOP.git
