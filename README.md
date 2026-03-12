@@ -179,5 +179,7 @@ Internal smoke testing was conducted to verify core features including:
 
 
 **Developers**
+
 Group 30
+
 MO-IT110 Object-Oriented Programming
