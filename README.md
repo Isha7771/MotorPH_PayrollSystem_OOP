@@ -58,13 +58,12 @@ Model Layer → Data structures and objects
 
 **Project Structure**
 
-OOPMotorPH
-    pom.xml
-    
-    src/main/java/com/mycompany/oopmotorph
-        app
-        AppContext.java
-        AppLauncher.java
+## OOPMotorPH
+├── pom.xml
+├── src/main/java/com/mycompany/oopmotorph
+│   ├── app
+│   │   ├── AppContext.java
+│   │   └── AppLauncher.java
 │   │
 │   ├── auth
 │   │   ├── AuthService.java
@@ -157,6 +156,7 @@ OOPMotorPH
     ├── SSSContribution.csv
     ├── WitholdingTax.csv
     └── users.csv
+## 
     
 **How to Run the System**
 1. Clone the repository
